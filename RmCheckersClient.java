@@ -82,6 +82,8 @@ public class RmCheckersClient {
 		    if (myClient.getColor().equals("White")) {
 		    	while (!gameOver) {
 			    	String opponentMove = myClient.readAndEcho(); // equals a black move
+			    	gameOver = isGameOver(opponentMove); // test for Game Over
+			    	if (gameOver) break;
 			    	engine.updateGameAfterOpponentMove(opponentMove);
 			    	readMessage = myClient.readAndEcho(); // move query
 			    	gameOver = isGameOver(readMessage); // test for Game Over
@@ -101,6 +103,8 @@ public class RmCheckersClient {
 			    	engine.updateGameAfterMyMove();
 			    	readMessage = myClient.readAndEcho(); // equals (my) black move
 			    	String opponentMove = myClient.readAndEcho(); // equals a white move
+			    	gameOver = isGameOver(opponentMove); // test for Game Over
+			    	if (gameOver) break;
 			    	engine.updateGameAfterOpponentMove(opponentMove);
 		    	}
 		    }

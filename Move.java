@@ -54,8 +54,8 @@ public class Move {
 		initHashMap();
 	}
 	
-	private void initHashMap() {
-		rowColToSamuel = new HashMap<String, Integer>();
+	private static void initHashMap() {
+		HashMap<String, Integer> rowColToSamuel = new HashMap<String, Integer>();
 		rowColToSamuel.put("(7:1)", 1);
 		rowColToSamuel.put("(7:3)", 2);
 		rowColToSamuel.put("(7:5)", 3);
@@ -88,6 +88,7 @@ public class Move {
 		rowColToSamuel.put("(0:2)", 33);
 		rowColToSamuel.put("(0:4)", 34);
 		rowColToSamuel.put("(0:6)", 35);
+		Move.rowColToSamuel = rowColToSamuel;
 	}
 	
 	public ArrayList<Integer> removedLocations() {
@@ -104,8 +105,11 @@ public class Move {
 	public char chip() { return chip; }
 	public int firstLocation() { return locations.get(0); }
 	public int lastLocation() { return locations.get(locations.size() - 1); }
-	public static String samuelToRowCol(int loc) { return samuelToRowCol[loc]; }
-	public static int rowColToSamuel(String rowCol) { return rowColToSamuel.get(rowCol); }
+	public static String samuelToRowCol(int loc) { return Move.samuelToRowCol[loc]; }
+	public static int rowColToSamuel(String rowCol) { 
+		if (Move.rowColToSamuel == null) initHashMap();
+		return Move.rowColToSamuel.get(rowCol); 
+	}
 	
 	public boolean isCrowned() {
 		if (chip == 'W' || chip == 'B') return false;
@@ -145,14 +149,14 @@ public class Move {
 		ArrayList<Integer> removed = removedLocations();
 		if (removed.size() == 0) return str;
 		str += "\nChips were removed from the following location(s): ";
-		for (Integer location : removed) str += samuelToRowCol[location] + ", ";
+		for (Integer location : removed) str += Move.samuelToRowCol[location] + ", ";
 		str = str.substring(0, str.length() - 2); // remove extra comma and space characters
 		return str;
 	}
 	
 	public String serverString() {
 		String str = "";
-		for (int i : locations) str += samuelToRowCol[i] + ":";
+		for (int i : locations) str += Move.samuelToRowCol[i] + ":";
 		str = str.substring(0, str.length() - 1); // remove last colon
 		return str;
 	}
