@@ -59,7 +59,7 @@ public class RmCheckersClient {
     public static void main(String[] args) {
     	String readMessage;
     	RmCheckersClient myClient = new RmCheckersClient();
-
+    	
     	try {
 		    myClient.readAndEcho(); // start message
 		    myClient.readAndEcho(); // ID query
@@ -71,25 +71,33 @@ public class RmCheckersClient {
 		    myClient.readAndEcho(); // opponent query
 		    myClient.writeMessageAndEcho(_opponent);  // opponent
 	
-		    myClient.setGameID(myClient.readAndEcho().substring(5, 10)); // game 
+		    String gameIDtag = myClient.readAndEcho();
+		    myClient.setGameID(gameIDtag.substring(5, gameIDtag.length())); // game 
 		    myClient.setColor(myClient.readAndEcho().substring(6, 11));  // color
 		    System.out.println("I am playing as " + myClient.getColor() + " in game number " + myClient.getGameID());
-		    readMessage = myClient.readAndEcho();  
-		    // now, readMessage will equal a black move if I am white (i.e. Move:Black:i:j)
-		    // otherwise readMessage will equal a query to move if I am black (i.e. ?Move(time):)
+		    
+		    GameEngine engine = new GameEngine(myClient.getColor());
+		    
 		    if (myClient.getColor().equals("White")) {
-				readMessage = myClient.readAndEcho();  // move query
-				myClient.writeMessageAndEcho("(2:4):(3:5)");
-				readMessage = myClient.readAndEcho();  // white move
-				readMessage = myClient.readAndEcho();  // black move
-				readMessage = myClient.readAndEcho();  // move query
-				// here you would need to move again
+		    	for (int i = 0; i < 100; i++) {
+			    	String opponentMove = myClient.readAndEcho(); // equals a black move
+			    	engine.updateGameAfterOpponentMove(opponentMove);
+			    	readMessage = myClient.readAndEcho(); // move query
+			    	String myMove = engine.getMove();
+			    	myClient.writeMessageAndEcho(myMove);
+			    	engine.updateGameAfterMyMove();
+			    	readMessage = myClient.readAndEcho(); // equals (my) white move
+		    	}
 		    } else {
-				myClient.writeMessageAndEcho("(5:3):(4:4)");
-				readMessage = myClient.readAndEcho();  // black move
-				readMessage = myClient.readAndEcho();  // white move
-				readMessage = myClient.readAndEcho();  // move query
-				// here you would need to move again
+		    	for (int i = 0; i < 100; i++) {
+		    		readMessage = myClient.readAndEcho(); // move query
+			    	String myMove = engine.getMove();
+			    	myClient.writeMessageAndEcho(myMove);
+			    	engine.updateGameAfterMyMove();
+			    	readMessage = myClient.readAndEcho(); // equals (my) black move
+			    	String opponentMove = myClient.readAndEcho(); // equals a white move
+			    	engine.updateGameAfterOpponentMove(opponentMove);
+		    	}
 		    }
 		   
 		    myClient.getSocket().close();

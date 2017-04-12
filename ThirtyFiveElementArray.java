@@ -35,7 +35,7 @@ public class ThirtyFiveElementArray implements CheckersGameState {
 	}
 	
 	// returns the starting configuration of any checkers game
-	public static CheckersGameState initialState() {
+	public static ThirtyFiveElementArray initialState() {
 		ThirtyFiveElementArray initial = new ThirtyFiveElementArray();
 		initial.player = new String(PLAYER1);
 		for (int i = 1; i <= 13; i++) {
@@ -128,7 +128,8 @@ public class ThirtyFiveElementArray implements CheckersGameState {
 	// standard move involving no jumps (can be 1 step in any of the 4 diagonals)
 	private Move standardMove(int start, int finish) {
 		if (validLocation(finish) && locations[finish] == ' ') {
-			return new Move(player, start, finish, null, shouldKing(player, locations[start], finish));
+			ArrayList<Integer> moves = new ArrayList<Integer>(Arrays.asList(start, finish));
+			return new Move(player, start, finish, null, moves, shouldKing(player, locations[start], finish));
 		}
 		return null;
 	}
@@ -149,8 +150,10 @@ public class ThirtyFiveElementArray implements CheckersGameState {
 			if (canJump(jump[0], jump[1], jump[2])) {
 				// if yes, we remove the chip at location[1]
 				ArrayList<Integer> removed = new ArrayList<Integer>(Arrays.asList(jump[1]));
+				ArrayList<Integer> moves = new ArrayList<Integer>(Arrays.asList(jump[0], jump[2]));
+				boolean kinged = shouldKing(player, locations[jump[0]], jump[2]);
 				// create the jump move
-				Move m = new Move(player, jump[0], jump[2], removed, shouldKing(player, locations[jump[0]], jump[2]));
+				Move m = new Move(player, jump[0], jump[2], removed, moves, kinged);
 				jumps.add(m);
 			}
 		}
@@ -165,19 +168,22 @@ public class ThirtyFiveElementArray implements CheckersGameState {
 		int startingLocation = node.fromParentToCurrent.fromLocation;
 		boolean kinged = node.fromParentToCurrent.movedChipBecomesKing;
 		ArrayList<Integer> removed = new ArrayList<Integer>();
+		ArrayList<Integer> locations = new ArrayList<Integer>(Arrays.asList(endingLocation));
 		for (Integer removedLoc : node.fromParentToCurrent.removedChips) {
 			removed.add(removedLoc);
 		}
 		SearchNode temp = node.parent;
 		while (temp != null && temp.fromParentToCurrent != null) {
 			startingLocation = temp.fromParentToCurrent.fromLocation;
+			locations.add(0, temp.fromParentToCurrent.toLocation);
 			kinged = kinged || temp.fromParentToCurrent.movedChipBecomesKing;
 			for (Integer removedLoc : temp.fromParentToCurrent.removedChips) {
 				removed.add(removedLoc);
 			}
 			temp = temp.parent;
 		}
-		return new Move(player, startingLocation, endingLocation, removed, kinged);
+		locations.add(0, startingLocation);
+		return new Move(player, startingLocation, endingLocation, removed, locations, kinged);
 	}
 	
 	private LinkedList<Move> jumpMoves(int location) {
