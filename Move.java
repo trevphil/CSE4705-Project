@@ -1,15 +1,13 @@
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class Move {
 
-	String playerMakingMove; // either 'Black' or 'White'
-	int fromLocation; // the current location of the piece being moved
-	int toLocation; // the location the piece being moved will end up after this move
-	ArrayList<Integer> removedChips; // ArrayList of locations containing chips that will be removed by this move
-	ArrayList<Integer> locations; // starts from 'fromLocation' and ends at 'toLocation' but includes all intermediary jumps
-	boolean movedChipBecomesKing; // true if, after this move, the chip being moved should be crowned
-	
-	private static final String[] locationConversions = new String[] {
+	private String playerMakingMove; // either 'Black' or 'White'
+	private ArrayList<Integer> locations; // starts from the starting location of 'chip', contains each following location 'chip' moves to
+	private char chip;
+	private static HashMap<String, Integer> rowColToSamuel;
+	private static final String[] samuelToRowCol = new String[] {
 		"ERROR", // location 0 invalid
 		"(7:1)", // location 1
 		"(7:3)", // location 2
@@ -48,19 +46,75 @@ public class Move {
 		"(0:6)", // location 35
 	};
 	
-	public Move(String player, int from, int to, ArrayList<Integer> removed, ArrayList<Integer> series, boolean kinged) {
+	public Move(String player, ArrayList<Integer> locs, char c) {
 		playerMakingMove = player;
-		fromLocation = from;
-		toLocation = to;
-		removedChips = new ArrayList<Integer>();
-		if (removed != null) {
-			for (int i : removed) removedChips.add(i);
-		}
 		locations = new ArrayList<Integer>();
-		if (series != null) {
-			for (int i : series) locations.add(i);
+		for (int l : locs) locations.add(l);
+		chip = c;
+		initHashMap();
+	}
+	
+	private void initHashMap() {
+		rowColToSamuel = new HashMap<String, Integer>();
+		rowColToSamuel.put("(7:1)", 1);
+		rowColToSamuel.put("(7:3)", 2);
+		rowColToSamuel.put("(7:5)", 3);
+		rowColToSamuel.put("(7:7)", 4);
+		rowColToSamuel.put("(6:0)", 5);
+		rowColToSamuel.put("(6:2)", 6);
+		rowColToSamuel.put("(6:4)", 7);
+		rowColToSamuel.put("(6:6)", 8);
+		rowColToSamuel.put("(5:1)", 10);
+		rowColToSamuel.put("(5:3)", 11);
+		rowColToSamuel.put("(5:5)", 12);
+		rowColToSamuel.put("(5:7)", 13);
+		rowColToSamuel.put("(4:0)", 14);
+		rowColToSamuel.put("(4:2)", 15);
+		rowColToSamuel.put("(4:4)", 16);
+		rowColToSamuel.put("(4:6)", 17);
+		rowColToSamuel.put("(3:1)", 19);
+		rowColToSamuel.put("(3:3)", 20);
+		rowColToSamuel.put("(3:5)", 21);
+		rowColToSamuel.put("(3:7)", 22);
+		rowColToSamuel.put("(2:0)", 23);
+		rowColToSamuel.put("(2:2)", 24);
+		rowColToSamuel.put("(2:4)", 25);
+		rowColToSamuel.put("(2:6)", 26);
+		rowColToSamuel.put("(1:1)", 28);
+		rowColToSamuel.put("(1:3)", 29);
+		rowColToSamuel.put("(1:5)", 30);
+		rowColToSamuel.put("(1:7)", 31);
+		rowColToSamuel.put("(0:0)", 32);
+		rowColToSamuel.put("(0:2)", 33);
+		rowColToSamuel.put("(0:4)", 34);
+		rowColToSamuel.put("(0:6)", 35);
+	}
+	
+	public ArrayList<Integer> removedLocations() {
+		ArrayList<Integer> removed = new ArrayList<Integer>();
+		for (int i = 0; i < locations.size() - 1; i++) {
+			int move = locations.get(i);
+			int next = locations.get(i + 1);
+			if (Math.abs(move - next) > 5) removed.add((move + next) / 2);
 		}
-		movedChipBecomesKing = kinged;
+		return removed;
+	}
+	
+	public String player() { return playerMakingMove; }
+	public char chip() { return chip; }
+	public int firstLocation() { return locations.get(0); }
+	public int lastLocation() { return locations.get(locations.size() - 1); }
+	public static String samuelToRowCol(int loc) { return samuelToRowCol[loc]; }
+	public static int rowColToSamuel(String rowCol) { return rowColToSamuel.get(rowCol); }
+	
+	public boolean isCrowned() {
+		if (chip == 'W' || chip == 'B') return false;
+		if (playerMakingMove.equals(CheckersGameState.PLAYER1)) {
+			for (int l : locations) if (l >= 32 && l <= 35) return true;
+		} else if (playerMakingMove.equals(CheckersGameState.PLAYER2)) {
+			for (int l : locations) if (l >= 1 && l <= 4) return true;
+		}
+		return false;
 	}
 	
 	@Override
@@ -68,37 +122,37 @@ public class Move {
 		if (!(o instanceof Move)) return false;
 		Move other = (Move)o;
 		
-		if (!playerMakingMove.equals(other.playerMakingMove)) return false;
-		if (movedChipBecomesKing != other.movedChipBecomesKing || removedChips.size() != other.removedChips.size()) return false;
-		if (locations.size() != other.locations.size()) return false;
-		if (fromLocation != other.fromLocation || toLocation != other.toLocation) return false;
-		for (int i = 0; i < removedChips.size(); i++) {
-			int a1 = removedChips.get(i);
-			int a2 = other.removedChips.get(i);
-			if (a1 != a2) return false;
-		}
+		if (!playerMakingMove.equals(other.playerMakingMove) || locations.size() != other.locations.size()) return false;
+		if (isCrowned() != other.isCrowned()) return false;
 		for (int i = 0; i < locations.size(); i++) {
 			int a1 = locations.get(i);
 			int a2 = other.locations.get(i);
 			if (a1 != a2) return false;
 		}
+		ArrayList<Integer> rm1 = removedLocations();
+		ArrayList<Integer> rm2 = other.removedLocations();
+		if (rm1.size() != rm2.size()) return false;
+		for (int i = 0; i < rm1.size(); i++) {
+			if (rm1.get(i) != rm2.get(i)) return false;
+		}
+		
 		return true;
 	}
 	
 	public String toString() {
-		String str = "'" + playerMakingMove + "' is moving a piece from location ";
-		str += locationConversions[fromLocation] + " to location " + locationConversions[toLocation];
-		if (movedChipBecomesKing) str += " - (chip became king)";
-		if (removedChips.size() == 0) return str;
+		String str = "'" + playerMakingMove + "' is moving a piece in this sequence: " + serverString();
+		if (isCrowned()) str += " - (chip became king)";
+		ArrayList<Integer> removed = removedLocations();
+		if (removed.size() == 0) return str;
 		str += "\nChips were removed from the following location(s): ";
-		for (Integer location : removedChips) str += locationConversions[location] + ", ";
+		for (Integer location : removed) str += samuelToRowCol[location] + ", ";
 		str = str.substring(0, str.length() - 2); // remove extra comma and space characters
 		return str;
 	}
 	
 	public String serverString() {
 		String str = "";
-		for (int i : locations) str += locationConversions[i] + ":";
+		for (int i : locations) str += samuelToRowCol[i] + ":";
 		str = str.substring(0, str.length() - 1); // remove last colon
 		return str;
 	}

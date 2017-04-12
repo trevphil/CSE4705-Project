@@ -78,19 +78,24 @@ public class RmCheckersClient {
 		    
 		    GameEngine engine = new GameEngine(myClient.getColor());
 		    
+		    boolean gameOver = false;
 		    if (myClient.getColor().equals("White")) {
-		    	for (int i = 0; i < 100; i++) {
+		    	while (!gameOver) {
 			    	String opponentMove = myClient.readAndEcho(); // equals a black move
 			    	engine.updateGameAfterOpponentMove(opponentMove);
 			    	readMessage = myClient.readAndEcho(); // move query
+			    	gameOver = isGameOver(readMessage); // test for Game Over
+			    	if (gameOver) break;
 			    	String myMove = engine.getMove();
 			    	myClient.writeMessageAndEcho(myMove);
 			    	engine.updateGameAfterMyMove();
 			    	readMessage = myClient.readAndEcho(); // equals (my) white move
 		    	}
 		    } else {
-		    	for (int i = 0; i < 100; i++) {
+		    	while (!gameOver) {
 		    		readMessage = myClient.readAndEcho(); // move query
+		    		gameOver = isGameOver(readMessage); // test for Game Over
+			    	if (gameOver) break;
 			    	String myMove = engine.getMove();
 			    	myClient.writeMessageAndEcho(myMove);
 			    	engine.updateGameAfterMyMove();
@@ -138,6 +143,10 @@ public class RmCheckersClient {
 	       System.exit(1);
     	}
     	return _socket;
+    }
+    
+    private static boolean isGameOver(String s) {
+    	return s.contains("Result");
     }
     
 }

@@ -39,21 +39,20 @@ public class ThirtyFiveElementArray implements CheckersGameState {
 		ThirtyFiveElementArray initial = new ThirtyFiveElementArray();
 		initial.player = new String(PLAYER1);
 		for (int i = 1; i <= 13; i++) {
-			if (validLocation(i)) {
-				initial.locations[i] = 'b'; // set initial locations of black chips
-			}
+			if (validLocation(i)) initial.locations[i] = 'b'; // set initial locations of black chips
 		}
 		for (int i = 14; i <= 22; i++) {
-			if (validLocation(i)) {
-				initial.locations[i] = ' '; // set empty locations
-			}
+			if (validLocation(i)) initial.locations[i] = ' '; // set empty locations
 		}
 		for (int i = 23; i <= 35; i++) {
-			if (validLocation(i)) {
-				initial.locations[i] = 'w'; // set initial locations of red chips
-			}
+			if (validLocation(i)) initial.locations[i] = 'w'; // set initial locations of red chips
 		}
 		return initial;
+	}
+	
+	public char chipAtLocation(int loc) {
+		if (!validLocation(loc)) return '?';
+		return locations[loc];
 	}
 	
 	/* ********** HELPER METHODS ********** */
@@ -91,16 +90,6 @@ public class ThirtyFiveElementArray implements CheckersGameState {
 		return false;
 	}
 	
-	private boolean shouldKing(String player, char chip, int location) {
-		// do not king if it is already a king
-		if (!validLocation(location) || isKing(chip)) return false;
-		// black player has reached the other end of the board and should be kinged
-		if (player.equals(PLAYER1) && location >= 32 && location <= 35) return true;
-		// red player has reached the other end of the board and should be kinged
-		if (player.equals(PLAYER2) && location >= 1 && location <= 4) return true;
-		return false;
-	}
-	
 	private boolean canJump(int start, int jumped, int finish) {
 		if (!validLocation(start) || !validLocation(jumped) || !validLocation(finish)) return false;
 		if (!canMoveForward(locations[start]) && (jumped > start || finish > start)) return false;
@@ -129,7 +118,7 @@ public class ThirtyFiveElementArray implements CheckersGameState {
 	private Move standardMove(int start, int finish) {
 		if (validLocation(finish) && locations[finish] == ' ') {
 			ArrayList<Integer> moves = new ArrayList<Integer>(Arrays.asList(start, finish));
-			return new Move(player, start, finish, null, moves, shouldKing(player, locations[start], finish));
+			return new Move(player, moves, locations[start]);
 		}
 		return null;
 	}
@@ -148,12 +137,9 @@ public class ThirtyFiveElementArray implements CheckersGameState {
 		for (int[] jump : relativeJumps) {
 			// test if this jump is actually possible
 			if (canJump(jump[0], jump[1], jump[2])) {
-				// if yes, we remove the chip at location[1]
-				ArrayList<Integer> removed = new ArrayList<Integer>(Arrays.asList(jump[1]));
 				ArrayList<Integer> moves = new ArrayList<Integer>(Arrays.asList(jump[0], jump[2]));
-				boolean kinged = shouldKing(player, locations[jump[0]], jump[2]);
 				// create the jump move
-				Move m = new Move(player, jump[0], jump[2], removed, moves, kinged);
+				Move m = new Move(player, moves, locations[jump[0]]);
 				jumps.add(m);
 			}
 		}
@@ -161,29 +147,17 @@ public class ThirtyFiveElementArray implements CheckersGameState {
 	}
 	
 	private Move traceback(SearchNode node) {
-		// simple properties to determine about this sequence of jump moves
-		int endingLocation = node.fromParentToCurrent.toLocation;
-		String player = node.current.player();
-		// trace back to find the original chip location and all removed chips
-		int startingLocation = node.fromParentToCurrent.fromLocation;
-		boolean kinged = node.fromParentToCurrent.movedChipBecomesKing;
-		ArrayList<Integer> removed = new ArrayList<Integer>();
-		ArrayList<Integer> locations = new ArrayList<Integer>(Arrays.asList(endingLocation));
-		for (Integer removedLoc : node.fromParentToCurrent.removedChips) {
-			removed.add(removedLoc);
+		// determine this sequence of jump moves
+		String player = node.gameState().player();
+		ArrayList<Integer> moves = new ArrayList<Integer>();
+		SearchNode temp = node;
+		while (node != null && node.move() != null) {
+			moves.add(0, node.move().lastLocation());
+			temp = node;
+			node = node.parent();
 		}
-		SearchNode temp = node.parent;
-		while (temp != null && temp.fromParentToCurrent != null) {
-			startingLocation = temp.fromParentToCurrent.fromLocation;
-			locations.add(0, temp.fromParentToCurrent.toLocation);
-			kinged = kinged || temp.fromParentToCurrent.movedChipBecomesKing;
-			for (Integer removedLoc : temp.fromParentToCurrent.removedChips) {
-				removed.add(removedLoc);
-			}
-			temp = temp.parent;
-		}
-		locations.add(0, startingLocation);
-		return new Move(player, startingLocation, endingLocation, removed, locations, kinged);
+		moves.add(0, temp.move().firstLocation());
+		return new Move(player, moves, locations[moves.get(0)]);
 	}
 	
 	private LinkedList<Move> jumpMoves(int location) {
@@ -201,10 +175,10 @@ public class ThirtyFiveElementArray implements CheckersGameState {
 		}
 		while (!stack.isEmpty()) {
 			SearchNode v = stack.remove(0);
-			if (!v.visited) {
-				v.visited = true;
-				ThirtyFiveElementArray currentState = (ThirtyFiveElementArray)v.current;
-				int newLocationOfJumpingChip = v.fromParentToCurrent.toLocation;
+			if (!v.visited()) {
+				v.setVisited();
+				ThirtyFiveElementArray currentState = (ThirtyFiveElementArray)v.gameState();
+				int newLocationOfJumpingChip = v.move().lastLocation();
 				LinkedList<Move> adjacencies = currentState.simpleJumps(newLocationOfJumpingChip);
 				if (adjacencies.size() == 0) {
 					// the last jump resulted in a terminal state allowing no more jumps
@@ -269,25 +243,24 @@ public class ThirtyFiveElementArray implements CheckersGameState {
 		ThirtyFiveElementArray newState = cloneMe();
 		
 		// test for invalid moves...
-		if (!x.playerMakingMove.equals(player)) return null; // player cannot make a move if it's not his turn
-		int fromLocationIndex = x.fromLocation;
-		int toLocationIndex = x.toLocation;
+		if (!x.player().equals(player)) return null; // player cannot make a move if it's not his turn
+		int fromLocationIndex = x.firstLocation();
+		int toLocationIndex = x.lastLocation();
 		if (player.equals(PLAYER1)) {
 			// Black's move, so chip at 'fromLocationIndex' must be either 'b' or 'B'
 			if (!(locations[fromLocationIndex] == 'b' || locations[fromLocationIndex] == 'B')) return null;
 		} else {
-			// Red's move, so chip at 'fromLocationIndex' must be either 'w' or 'W'
+			// White's move, so chip at 'fromLocationIndex' must be either 'w' or 'W'
 			if (!(locations[fromLocationIndex] == 'w' || locations[fromLocationIndex] == 'W')) return null;
 		}
 		
 		// validated move, so update the newState to reflect changes
-		char chipBeingMoved = newState.locations[fromLocationIndex];
 		newState.locations[fromLocationIndex] = ' '; // old location is now empty
-		newState.locations[toLocationIndex] = chipBeingMoved; // new location gets the chip
-		// change chip to capital letter if it needs to be kinged
-		if (x.movedChipBecomesKing) newState.makeKing(toLocationIndex);
+		newState.locations[toLocationIndex] = x.chip(); // new location gets the chip
+		// change chip to capital letter if it needs to be crowned
+		if (x.isCrowned()) newState.makeKing(toLocationIndex);
 		// turn locations where chips were removed into blank locations
-		for (Integer removedLocation : x.removedChips) {
+		for (Integer removedLocation : x.removedLocations()) {
 			newState.locations[removedLocation] = ' ';
 		}
 		// reverse who's move it is
