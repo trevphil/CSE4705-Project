@@ -23,6 +23,45 @@ public class ThirtyFiveElementArray implements CheckersGameState {
 		player = "???";
 	}
 	
+	public double evaluate(String myPlayer) {
+		double myPieces = 0;
+		double opponentPieces = 0;
+		double myKings = 0;
+		double opponentKings = 0;
+		for (int i = 1; i < locations.length; i++) {
+			if (invalidLocations.contains(i)) continue;
+			char c = locations[i];
+			if (myPlayer.equals(PLAYER1) && (c == 'b' || c == 'B')) {
+				myPieces++;
+			} else if (myPlayer.equals(PLAYER2) && (c == 'w' || c == 'W')) {
+				myPieces++;
+			}
+			if (myPlayer.equals(PLAYER1) && (c == 'w' || c == 'W')) {
+				opponentPieces++;
+			} else if (myPlayer.equals(PLAYER2) && (c == 'b' || c == 'B')) {
+				opponentPieces++;
+			}
+			if (myPlayer.equals(PLAYER1) && c == 'B') {
+				myKings++;
+			} else if (myPlayer.equals(PLAYER2) && c == 'W') {
+				myKings++;
+			}
+			if (myPlayer.equals(PLAYER1) && c == 'W') {
+				opponentKings++;
+			} else if (myPlayer.equals(PLAYER2) && c == 'B') {
+				opponentKings++;
+			}
+		}
+		
+		// normalize
+		myPieces /= 12.0;
+		myKings /= 12.0;
+		opponentPieces = (12 - opponentPieces) / 12.0;
+		opponentKings = (12 - opponentKings) / 12.0;
+		return myPieces * GameEngine.MY_PIECES + myKings * GameEngine.MY_KINGS + 
+				opponentPieces * GameEngine.OPPONENT_PIECES + opponentKings * GameEngine.OPPONENT_KINGS;
+	}
+	
 	@Override
 	public boolean equals(Object o) {
 		if (!(o instanceof ThirtyFiveElementArray)) return false;

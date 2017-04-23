@@ -16,8 +16,8 @@ public class GameStateTester {
 			int randomNum = ThreadLocalRandom.current().nextInt(0, moves.size()); // random integer
 			Move move = moves.get(randomNum);
 			System.out.println("Random move chosen: " + move + "\nBoard state after move:");
-			testState = testState.result(move);
-			testState.printState();
+			//testState = testState.result(move);
+			//testState.printState();
 		}
 
 	}
