@@ -24,18 +24,13 @@ public class ThirtyFiveElementArray implements CheckersGameState {
 	}
 	
 	public double evaluate(String myPlayer) {
-		double myPieces = 0;
+		double myCenterPieces = 0;
 		double opponentPieces = 0;
 		double myKings = 0;
 		double opponentKings = 0;
 		for (int i = 1; i < locations.length; i++) {
 			if (invalidLocations.contains(i)) continue;
 			char c = locations[i];
-			if (myPlayer.equals(PLAYER1) && (c == 'b' || c == 'B')) {
-				myPieces++;
-			} else if (myPlayer.equals(PLAYER2) && (c == 'w' || c == 'W')) {
-				myPieces++;
-			}
 			if (myPlayer.equals(PLAYER1) && (c == 'w' || c == 'W')) {
 				opponentPieces++;
 			} else if (myPlayer.equals(PLAYER2) && (c == 'b' || c == 'B')) {
@@ -52,13 +47,21 @@ public class ThirtyFiveElementArray implements CheckersGameState {
 				opponentKings++;
 			}
 		}
-		
+		int[] centerPieces = new int[] { 11, 12, 15, 16, 20, 21, 24, 25 };
+		for (int i : centerPieces) {
+			char c = locations[i];
+			if (myPlayer.equals(PLAYER1) && (c == 'w' || c == 'W')) {
+				myCenterPieces++;
+			} else if (myPlayer.equals(PLAYER2) && (c == 'b' || c == 'B')) {
+				myCenterPieces++;
+			}
+		}
 		// normalize
-		myPieces /= 12.0;
+		myCenterPieces /= 8.0;
 		myKings /= 12.0;
 		opponentPieces = (12 - opponentPieces) / 12.0;
 		opponentKings = (12 - opponentKings) / 12.0;
-		return myPieces * GameEngine.MY_PIECES + myKings * GameEngine.MY_KINGS + 
+		return myCenterPieces * GameEngine.MY_CENTER_PIECES + myKings * GameEngine.MY_KINGS + 
 				opponentPieces * GameEngine.OPPONENT_PIECES + opponentKings * GameEngine.OPPONENT_KINGS;
 	}
 	

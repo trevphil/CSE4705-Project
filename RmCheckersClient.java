@@ -43,6 +43,9 @@ public class RmCheckersClient {
 
     private String _gameID;
     private String _myColor;
+    
+    private static RmCheckersClient myClient = null;
+    private static GameEngine engine = null;
   
     // constructor
     public RmCheckersClient() { _socket = openSocket(); }
@@ -57,8 +60,14 @@ public class RmCheckersClient {
     public String getColor() { return _myColor; }
 
     public static void main(String[] args) {
+    	for (int i = 0; i < 10; i++) {
+    		playGame();
+    	}
+    }
+    
+    private static void playGame() {
     	String readMessage;
-    	RmCheckersClient myClient = new RmCheckersClient();
+    	myClient = new RmCheckersClient();
     	
     	try {
 		    myClient.readAndEcho(); // start message
@@ -76,7 +85,7 @@ public class RmCheckersClient {
 		    myClient.setColor(myClient.readAndEcho().substring(6, 11));  // color
 		    System.out.println("I am playing as " + myClient.getColor() + " in game number " + myClient.getGameID());
 		    
-		    GameEngine engine = new GameEngine(myClient.getColor());
+		    engine = new GameEngine(myClient.getColor());
 		    
 		    boolean gameOver = false;
 		    if (myClient.getColor().equals("White")) {
@@ -112,7 +121,6 @@ public class RmCheckersClient {
 		    myClient.getSocket().close();
 		} catch (IOException e) {
 		    System.out.println("Failed in read/close");
-		    System.exit(1);
 		}
     }
 
@@ -150,7 +158,17 @@ public class RmCheckersClient {
     }
     
     private static boolean isGameOver(String s) {
-    	return s.contains("Result");
+    	boolean gameOver = s.contains("Result");
+    	int indexOfT = s.indexOf('t');
+    	String winningPlayer = s.substring(indexOfT + 2, s.length());
+    	if (gameOver) {
+    		if (myClient.getColor().equals(winningPlayer)) {
+    			engine.saveMutatedWeights();
+    		} else {
+    			engine.saveOriginalWeights();
+    		}
+    	}
+    	return gameOver;
     }
     
 }
