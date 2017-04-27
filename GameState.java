@@ -5,7 +5,10 @@ import java.util.List;
 
 // Trevor Phillips
 
-public class ThirtyFiveElementArray implements CheckersGameState {
+public class GameState {
+	
+	public static final String PLAYER1 = "Black"; // black moves first in checkers
+	public static final String PLAYER2 = "White";
 	
 	// 35-element array
 	// a space (' ') at index i indicates a blank location
@@ -14,10 +17,10 @@ public class ThirtyFiveElementArray implements CheckersGameState {
 	// a w at index i indicates a red chip
 	// a W at index i indicates a red king
 	private char[] locations;
-	private static List<Integer> invalidLocations = new LinkedList<Integer>(Arrays.asList(9, 18, 27));
+	public static final List<Integer> invalidLocations = new LinkedList<Integer>(Arrays.asList(9, 18, 27));
 	private String player;
 	
-	public ThirtyFiveElementArray() {
+	public GameState() {
 		// given size 36 so we can refer to indices as they are shown in diagrams (rather than starting at 0)
 		locations = new char[36];
 		player = "???";
@@ -28,47 +31,42 @@ public class ThirtyFiveElementArray implements CheckersGameState {
 		double opponentPieces = 0;
 		double myKings = 0;
 		double opponentKings = 0;
-		for (int i = 1; i < locations.length; i++) {
-			if (invalidLocations.contains(i)) continue;
-			char c = locations[i];
-			if (myPlayer.equals(PLAYER1) && (c == 'w' || c == 'W')) {
-				opponentPieces++;
-			} else if (myPlayer.equals(PLAYER2) && (c == 'b' || c == 'B')) {
-				opponentPieces++;
-			}
-			if (myPlayer.equals(PLAYER1) && c == 'B') {
-				myKings++;
-			} else if (myPlayer.equals(PLAYER2) && c == 'W') {
-				myKings++;
-			}
-			if (myPlayer.equals(PLAYER1) && c == 'W') {
-				opponentKings++;
-			} else if (myPlayer.equals(PLAYER2) && c == 'B') {
-				opponentKings++;
+		for (int i = 1; i <= 35; i++) {
+			if (GameState.invalidLocations.contains(i)) continue;
+			char c = chipAtLocation(i);
+			if (myPlayer.equals(GameState.PLAYER1)) { // my player is Black
+				if (c == 'w' || c == 'W') {
+					opponentPieces++;
+					if (c == 'W') opponentKings++;
+				} else if (c == 'B') myKings++;
+			} else if (myPlayer.equals(GameState.PLAYER2)) { // my player is White
+				if (c == 'b' || c == 'B') {
+					opponentPieces++;
+					if (c == 'B') opponentKings++;
+				} else if (c == 'W') myKings++;
 			}
 		}
 		int[] centerPieces = new int[] { 11, 12, 15, 16, 20, 21, 24, 25 };
 		for (int i : centerPieces) {
-			char c = locations[i];
-			if (myPlayer.equals(PLAYER1) && (c == 'w' || c == 'W')) {
-				myCenterPieces++;
-			} else if (myPlayer.equals(PLAYER2) && (c == 'b' || c == 'B')) {
-				myCenterPieces++;
-			}
+			char c = chipAtLocation(i);
+			if (myPlayer.equals(GameState.PLAYER1) && (c == 'w' || c == 'W')) myCenterPieces++;
+			else if (myPlayer.equals(GameState.PLAYER2) && (c == 'b' || c == 'B')) myCenterPieces++;
 		}
 		// normalize
 		myCenterPieces /= 8.0;
 		myKings /= 12.0;
 		opponentPieces = (12 - opponentPieces) / 12.0;
 		opponentKings = (12 - opponentKings) / 12.0;
-		return myCenterPieces * GameEngine.MY_CENTER_PIECES + myKings * GameEngine.MY_KINGS + 
-				opponentPieces * GameEngine.OPPONENT_PIECES + opponentKings * GameEngine.OPPONENT_KINGS;
+		return  myCenterPieces	* GameEngine.valueForFactor(GameEngine.MY_CENTER_PIECES) +
+				myKings 		* GameEngine.valueForFactor(GameEngine.MY_KINGS) +
+				opponentPieces	* GameEngine.valueForFactor(GameEngine.OPPONENT_PIECES) +
+				opponentKings	* GameEngine.valueForFactor(GameEngine.OPPONENT_KINGS);
 	}
 	
 	@Override
 	public boolean equals(Object o) {
-		if (!(o instanceof ThirtyFiveElementArray)) return false;
-		ThirtyFiveElementArray other = (ThirtyFiveElementArray)o;
+		if (!(o instanceof GameState)) return false;
+		GameState other = (GameState)o;
 		if (!player.equals(other.player)) return false;
 		for (int i = 0; i < locations.length; i++) {
 			if (!(locations[i] == other.locations[i])) return false;
@@ -77,8 +75,8 @@ public class ThirtyFiveElementArray implements CheckersGameState {
 	}
 	
 	// returns the starting configuration of any checkers game
-	public static ThirtyFiveElementArray initialState() {
-		ThirtyFiveElementArray initial = new ThirtyFiveElementArray();
+	public static GameState initialState() {
+		GameState initial = new GameState();
 		initial.player = new String(PLAYER1);
 		for (int i = 1; i <= 13; i++) {
 			if (validLocation(i)) initial.locations[i] = 'b'; // set initial locations of black chips
@@ -98,6 +96,38 @@ public class ThirtyFiveElementArray implements CheckersGameState {
 	}
 	
 	/* ********** HELPER METHODS ********** */
+	
+	public boolean checkIfWin(String myPlayer) {
+		// returns true if one of the players has no more pieces (i.e. Game Over)
+		boolean noBlack = true;
+		boolean noWhite = true;
+		
+		for (char c : locations) {
+			if (c == 'b' || c == 'B') {
+				noBlack = false;
+			} else if (c == 'w' || c == 'W') {
+				noWhite = false;
+			}
+		}
+
+		if (noWhite && myPlayer.equals(PLAYER1)) return true; // my player (black) took all white chips
+		if (noBlack && myPlayer.equals(PLAYER2)) return true; // my player (white) took all black chips
+		return false;
+	}
+
+	// return true if this game state is a terminal state (i.e. Game Over)
+	public boolean isTerminal() { 
+		return checkIfWin(PLAYER1) || checkIfWin(PLAYER2); 
+	}
+
+	public double utility(String myPlayer) {
+		if (checkIfWin(myPlayer)) return Integer.MAX_VALUE;
+		
+		String opponent = myPlayer.equals(PLAYER1) ? PLAYER2 : PLAYER1;
+		if (checkIfWin(opponent)) return Integer.MIN_VALUE;
+
+		return this.evaluate(myPlayer);
+	}
 	
 	// checks that the location is within bounds
 	private static boolean validLocation(int loc) {
@@ -141,8 +171,8 @@ public class ThirtyFiveElementArray implements CheckersGameState {
 	
 	// returns a game state configured exactly like the current one, but a different object
 	// that way the clone can be modified without modifying the original state (used in result() method)
-	private ThirtyFiveElementArray cloneMe() {
-		ThirtyFiveElementArray duplicate = new ThirtyFiveElementArray();
+	public GameState cloneMe() {
+		GameState duplicate = new GameState();
 		for (int i = 0; i < locations.length; i++) {
 			duplicate.locations[i] = locations[i];
 		}
@@ -210,7 +240,7 @@ public class ThirtyFiveElementArray implements CheckersGameState {
 		ArrayList<SearchNode> stack = new ArrayList<SearchNode>();
 		LinkedList<Move> initialJumps = simpleJumps(location);
 		for (Move jump : initialJumps) {
-			ThirtyFiveElementArray result = (ThirtyFiveElementArray)this.result(jump);
+			GameState result = this.result(jump);
 			result.player = new String(player); // do not reverse the player in this special case
 			SearchNode node = new SearchNode(root, result, jump, false);
 			stack.add(node);
@@ -219,7 +249,7 @@ public class ThirtyFiveElementArray implements CheckersGameState {
 			SearchNode v = stack.remove(0);
 			if (!v.visited()) {
 				v.setVisited();
-				ThirtyFiveElementArray currentState = (ThirtyFiveElementArray)v.gameState();
+				GameState currentState = v.gameState();
 				int newLocationOfJumpingChip = v.move().lastLocation();
 				LinkedList<Move> adjacencies = currentState.simpleJumps(newLocationOfJumpingChip);
 				if (adjacencies.size() == 0) {
@@ -228,7 +258,7 @@ public class ThirtyFiveElementArray implements CheckersGameState {
 				} else {
 					// add nodes for the DFS
 					for (Move jump : adjacencies) {
-						ThirtyFiveElementArray result = (ThirtyFiveElementArray)currentState.result(jump);
+						GameState result = currentState.result(jump);
 						result.player = new String(currentState.player); // do not reverse the player
 						SearchNode node = new SearchNode(v, result, jump, false);
 						stack.add(0, node);
@@ -240,8 +270,6 @@ public class ThirtyFiveElementArray implements CheckersGameState {
 		return jumps;
 	}
 		
-	/* ********** CheckersGameState IMPLEMENTATION METHODS ********** */
-	
 	public String player() {
 		return player;
 	}
@@ -281,8 +309,8 @@ public class ThirtyFiveElementArray implements CheckersGameState {
 		return actions;
 	}
 	
-	public CheckersGameState result(Move x) {
-		ThirtyFiveElementArray newState = cloneMe();
+	public GameState result(Move x) {
+		GameState newState = cloneMe();
 		
 		// test for invalid moves...
 		if (!x.player().equals(player)) return null; // player cannot make a move if it's not his turn

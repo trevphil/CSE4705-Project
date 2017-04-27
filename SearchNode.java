@@ -2,11 +2,11 @@
 public class SearchNode {
 
 	private SearchNode parent;
-	private CheckersGameState current;
+	private GameState current;
 	private Move fromParentToCurrent;
 	private boolean visited;
 	
-	public SearchNode(SearchNode p, CheckersGameState c, Move m, boolean v) {
+	public SearchNode(SearchNode p, GameState c, Move m, boolean v) {
 		parent = p;
 		current = c;
 		fromParentToCurrent = m;
@@ -14,7 +14,7 @@ public class SearchNode {
 	}
 	
 	public SearchNode parent() { return parent; }
-	public CheckersGameState gameState() { return current; }
+	public GameState gameState() { return current; }
 	public Move move() { return fromParentToCurrent; }
 	public boolean visited() { return visited; }
 	public void setVisited() { visited = true; }

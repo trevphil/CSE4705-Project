@@ -59,10 +59,16 @@ public class RmCheckersClient {
     public void setColor(String color) { _myColor = color; }
     public String getColor() { return _myColor; }
 
+    private static final int NUM_GAMES_TO_PLAY = 20;
+    private static boolean myPlayerWonLastGame;
+    
     public static void main(String[] args) {
-    	for (int i = 0; i < 10; i++) {
+    	int wonGames = 0;
+    	for (int i = 0; i < NUM_GAMES_TO_PLAY; i++) {
     		playGame();
+    		if (myPlayerWonLastGame) wonGames++;
     	}
+    	System.out.printf("won %d/%d games (%.02f%%)\n", wonGames, NUM_GAMES_TO_PLAY, (double)wonGames/NUM_GAMES_TO_PLAY);
     }
     
     private static void playGame() {
@@ -121,6 +127,7 @@ public class RmCheckersClient {
 		    myClient.getSocket().close();
 		} catch (IOException e) {
 		    System.out.println("Failed in read/close");
+		    System.exit(1);
 		}
     }
 
@@ -164,8 +171,10 @@ public class RmCheckersClient {
     	if (gameOver) {
     		if (myClient.getColor().equals(winningPlayer)) {
     			engine.saveMutatedWeights();
+    			myPlayerWonLastGame = true;
     		} else {
     			engine.saveOriginalWeights();
+    			myPlayerWonLastGame = false;
     		}
     	}
     	return gameOver;

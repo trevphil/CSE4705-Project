@@ -113,9 +113,9 @@ public class Move {
 	
 	public boolean isCrowned() {
 		if (chip == 'W' || chip == 'B') return false;
-		if (playerMakingMove.equals(CheckersGameState.PLAYER1)) {
+		if (playerMakingMove.equals(GameState.PLAYER1)) {
 			for (int l : locations) if (l >= 32 && l <= 35) return true;
-		} else if (playerMakingMove.equals(CheckersGameState.PLAYER2)) {
+		} else if (playerMakingMove.equals(GameState.PLAYER2)) {
 			for (int l : locations) if (l >= 1 && l <= 4) return true;
 		}
 		return false;
@@ -159,6 +159,13 @@ public class Move {
 		for (int i : locations) str += Move.samuelToRowCol[i] + ":";
 		str = str.substring(0, str.length() - 1); // remove last colon
 		return str;
+	}
+	
+	public static double evaluate(GameState initial, Move move, String myPlayer) {
+		double resultingStateEvaluation = initial.result(move).evaluate(myPlayer);
+		int piecesTaken = move.removedLocations().size();
+		return  piecesTaken		* GameEngine.valueForFactor(GameEngine.PIECES_TAKEN) +
+				resultingStateEvaluation;
 	}
 	
 }

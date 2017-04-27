@@ -8,7 +8,7 @@ public class GameStateTester {
 		int numSampleMoves = 100; // Number of moves to make for each test
 		
 		System.out.println("\nTESTING 35-Element Representation:");
-		CheckersGameState testState = ThirtyFiveElementArray.initialState(); // starting config of checkers game
+		GameState testState = GameState.initialState(); // starting config of checkers game
 		testState.printState();
 		for (int i = 0; i < numSampleMoves; i++) {
 			List<Move> moves = testState.actions();

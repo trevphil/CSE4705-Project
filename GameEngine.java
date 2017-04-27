@@ -3,135 +3,143 @@ import java.io.*;
 
 public class GameEngine {
 
-	ThirtyFiveElementArray game;
+	GameState game;
 	String myPlayer;
 	Move myMove;
 	
-	public static double MY_CENTER_PIECES = 1.0;
-	public static double MY_CENTER_PIECES_N = 1;
-	public static double MY_KINGS = 1.0;
-	public static double MY_KINGS_N = 1;
-	public static double OPPONENT_PIECES = 1.0;
-	public static double OPPONENT_PIECES_N = 1;
-	public static double OPPONENT_KINGS = 1.0;
-	public static double OPPONENT_KINGS_N = 1;
-	private static double[] initialWeights = new double[8];
+	private static final String WEIGHTS_FILE = "./src/weights.txt";
+	public static final String PIECES_TAKEN = "PIECES_TAKEN";
+	public static final String MY_CENTER_PIECES = "MY_CENTER_PIECES";
+	public static final String MY_KINGS = "MY_KINGS";
+	public static final String OPPONENT_PIECES = "OPPONENT_PIECES";
+	public static final String OPPONENT_KINGS = "OPPONENT_KINGS";
+	
+	public static final String[] factors = 			{ PIECES_TAKEN, MY_CENTER_PIECES, MY_KINGS, OPPONENT_PIECES, OPPONENT_KINGS	};
+	private static final double[] initialValues = 	{ 3.0,			2.0,				1.0,	0.5,				0.5 		};
+	
+	private static HashMap<String, Weight> weights = new HashMap<String, Weight>();
+	private static HashMap<String, Weight> mutatedWeights = new HashMap<String, Weight>();
+	private static final double P_OFF = 0.33; // the increase (or decrease) in probability that a weight's probability will mutate 
 			
 	public GameEngine(String p) {
-		game = ThirtyFiveElementArray.initialState();
+		game = GameState.initialState();
 		myPlayer = p;
 		loadWeights();
 		mutateWeights();
 	}
 	
 	public void updateGameAfterOpponentMove(String opponentMove) {
-		String opponent = opponentMove.substring(5, 10);
+		String opponent = opponentMove.substring(5, 10); // opponent's color
 		ArrayList<Integer> locations = new ArrayList<Integer>();
-		String temp = opponentMove.substring(10, opponentMove.length());
+		String temp = opponentMove.substring(10, opponentMove.length()); // remove the prefix of the opponent's color
 		int indexOfCloseParen = temp.indexOf(')');
 		while (indexOfCloseParen != -1) {
-			int loc = Move.rowColToSamuel(temp.substring(indexOfCloseParen - 4, indexOfCloseParen + 1));
+			int loc = Move.rowColToSamuel(temp.substring(indexOfCloseParen - 4, indexOfCloseParen + 1)); // e.g. "(1:2)"
 			locations.add(loc);
-			temp = temp.substring(indexOfCloseParen + 1, temp.length());
+			temp = temp.substring(indexOfCloseParen + 1, temp.length()); // trim off the location that was just added
 			indexOfCloseParen = temp.indexOf(')');
 		}
 		Move m = new Move(opponent, locations, game.chipAtLocation(locations.get(0)));
-		game = (ThirtyFiveElementArray)game.result(m);
+		game = game.result(m);
 	}
 	
 	public void updateGameAfterMyMove() {
-		game = (ThirtyFiveElementArray)game.result(myMove);
+		game = game.result(myMove);
 	}
 	
 	public String getMove() {
-		// as of right now, returns a random move
 		List<Move> moves = game.actions();
+		if (moves.size() == 0) return null;
 		
-		if (moves.size() == 0) {
-			if (game.player().equals(myPlayer)) {
-				System.out.println("GAME OVER! LOSS!");
-			} else {
-				System.out.println("GAME OVER! WIN!");
-			}
-			return "GAME OVER";
-		}
+		/*
+		Collections.sort(moves, new Comparator<Move>() {
+		    @Override
+		    public int compare(Move m1, Move m2) {
+		    	double eval1 = Move.evaluate(game, m1, myPlayer);
+		    	double eval2 = Move.evaluate(game, m2, myPlayer);
+		    	if (eval1 > eval2) return 1;
+		    	else if (eval2 > eval1) return -1;
+		        return 0;
+		    }
+		});
+		// moves are now ranked from least beneficial to most beneficial
+		myMove = moves.get(moves.size() - 1);
+		return myMove.serverString();
+		*/
 		
-		int indexOfBestMove = 0;
-		double valueOfBestMove = -1;
-		for (int i = 0; i < moves.size(); i++) {
-			double resultingGameValue = ((ThirtyFiveElementArray)game.result(moves.get(i))).evaluate(myPlayer);
-			if (resultingGameValue > valueOfBestMove) {
-				indexOfBestMove = i;
-				valueOfBestMove = resultingGameValue;
-			}
-		}
-		myMove = moves.get(indexOfBestMove);
-		return moves.get(indexOfBestMove).serverString();
+		MinimaxSearch minimaxSearch = new MinimaxSearch(myPlayer);
+		Move bestMove = minimaxSearch.minimaxDecision(game);
+		if (bestMove == null) return null;
+		
+		myMove = bestMove;
+		return myMove.serverString();
+	}
+	
+	public static double valueForFactor(String factor) {
+		Weight w = mutatedWeights.get(factor);
+		return w == null ? 0 : w.value;
 	}
 	
 	private void loadWeights() {
 		try {
-			File weights = new File("./src/weights.txt");
-			Scanner scan = new Scanner(weights);
-			String[] parts = scan.nextLine().split(" ");
-			MY_CENTER_PIECES = Double.parseDouble(parts[1]);
-			MY_CENTER_PIECES_N = Double.parseDouble(parts[2]);
-			parts = scan.nextLine().split(" ");
-			MY_KINGS = Double.parseDouble(parts[1]);
-			MY_KINGS_N = Double.parseDouble(parts[2]);
-			parts = scan.nextLine().split(" ");
-			OPPONENT_PIECES = Double.parseDouble(parts[1]);
-			OPPONENT_PIECES_N = Double.parseDouble(parts[2]);
-			parts = scan.nextLine().split(" ");
-			OPPONENT_KINGS = Double.parseDouble(parts[1]);
-			OPPONENT_KINGS_N = Double.parseDouble(parts[2]);
-			initialWeights = new double[] {
-				new Double(MY_CENTER_PIECES), new Double(MY_CENTER_PIECES_N),
-				new Double(MY_KINGS), new Double(MY_KINGS_N),
-				new Double(OPPONENT_PIECES), new Double(OPPONENT_PIECES_N),
-				new Double(OPPONENT_KINGS), new Double(OPPONENT_KINGS_N)
-			};
+			File f = new File(WEIGHTS_FILE);
+			Scanner scan = new Scanner(f);
+			weights = new HashMap<String, Weight>();
+			while (scan.hasNextLine()) {
+				String[] parts = scan.nextLine().split(" ");
+				String name = parts[0];
+				double value = Double.parseDouble(parts[1]);
+				int sampleSize = Integer.parseInt(parts[2]);
+				double probabilityPositive = Double.parseDouble(parts[3]);
+				Weight w = new Weight(name, value, sampleSize, probabilityPositive);
+				weights.put(name, w);
+			}
 			scan.close();
 		} catch (FileNotFoundException e) {
-			File file = new File("./src/weights.txt");
+			File file = new File(WEIGHTS_FILE);
 			try {
 				PrintWriter writer = new PrintWriter(file, "UTF-8");
-				writer.println("MY_CENTER_PIECES 1.0 1");
-				writer.println("MY_KINGS 1.0 1");
-				writer.println("OPPONENT_PIECES 1.0 1");
-				writer.println("OPPONENT_KINGS 1.0 1");
+				// initialize "weights.txt" file with all factors having a weight of 1 and probability 0.50
+				for (int i = 0; i < factors.length; i++) {
+					writer.println(factors[i] + " " + initialValues[i] + " 1 0.50");
+				}
 				writer.close();
 				loadWeights();
-			} catch (Exception e2) { }
+			} catch (Exception e2) { 
+				e.printStackTrace();
+			}
 		}
 	}
 	
 	private void mutateWeights() {
-		boolean positive = Math.random() > 0.50;
-		MY_CENTER_PIECES += (positive ? 1 : -1) * Math.random() * 0.30 * MY_CENTER_PIECES;
-		
-		positive = Math.random() > 0.50;
-		MY_KINGS += (positive ? 1 : -1) * Math.random() * 0.30 * MY_KINGS;
-		
-		positive = Math.random() > 0.50;
-		OPPONENT_PIECES += (positive ? 1 : -1) * Math.random() * 0.30 * OPPONENT_PIECES;
-		
-		positive = Math.random() > 0.50;
-		OPPONENT_KINGS += (positive ? 1 : -1) * Math.random() * 0.30 * OPPONENT_KINGS;
+		mutatedWeights = new HashMap<String, Weight>();
+		for (String factor : factors) {
+			Weight w = weights.get(factor);
+			if (w != null) {
+				boolean positive = Math.random() <= w.probabilityPositive;
+				double value = w.value + (positive ? 1 : -1) * Math.random();
+				int n = w.sampleSize + 1;
+				double pPositive = w.probabilityPositive + w.probabilityPositive * (positive ? P_OFF : -P_OFF);
+				Weight mutated = new Weight(factor, value, n, pPositive);
+				mutatedWeights.put(factor, mutated);
+			}
+		}
 	}
 	
 	public void saveMutatedWeights() {
 		File file = new File("./src/weights.txt");
 		try {
 			PrintWriter writer = new PrintWriter(file, "UTF-8");
-			String s = "MY_CENTER_PIECES " + (initialWeights[0] * initialWeights[1] + MY_CENTER_PIECES)/(initialWeights[1] + 1) + " " + (initialWeights[1] + 1);
-			writer.println(s);
-			s = "MY_KINGS " + (initialWeights[2] * initialWeights[3] + MY_KINGS)/(initialWeights[3] + 1) + " " + (initialWeights[3] + 1);
-			writer.println(s);
-			s = "OPPONENT_PIECES " + (initialWeights[4] * initialWeights[5] + OPPONENT_PIECES)/(initialWeights[5] + 1) + " " + (initialWeights[5] + 1);
-			writer.println(s);
-			s = "OPPONENT_KINGS " + (initialWeights[6] * initialWeights[7] + OPPONENT_KINGS)/(initialWeights[7] + 1) + " " + (initialWeights[7] + 1);
-			writer.println(s);
+			for (String factor : factors) {
+				Weight oldWeight = weights.get(factor);
+				Weight newWeight = mutatedWeights.get(factor);
+				if (oldWeight != null && newWeight != null) {
+					double averagedValue = (oldWeight.value * oldWeight.sampleSize + newWeight.value) / newWeight.sampleSize;
+					int n = newWeight.sampleSize; // = oldWeight.sampleSize + 1
+					double averagedProb = (oldWeight.probabilityPositive * oldWeight.sampleSize + newWeight.probabilityPositive) / n;
+					writer.println(factor + " " + averagedValue + " " + n + " " + averagedProb);
+				}
+			}
 			writer.close();
 		} catch (Exception e2) { }
 	}
