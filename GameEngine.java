@@ -68,7 +68,7 @@ public class GameEngine {
 		*/
 		
 		MinimaxSearch minimaxSearch = new MinimaxSearch(myPlayer);
-		Move bestMove = minimaxSearch.minimaxDecision(game);
+		Move bestMove = minimaxSearch.minimaxDecision(game, Integer.MIN_VALUE, Integer.MAX_VALUE);
 		if (bestMove == null) return null;
 		
 		myMove = bestMove;
