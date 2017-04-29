@@ -3,7 +3,7 @@ import java.util.List;
 public class MinimaxSearch {
 	
 	private String myPlayer;
-	private static final int FIXED_DEPTH = 11;
+	private static final int FIXED_DEPTH = 12;
 	
 	public MinimaxSearch(String mp) {
 		myPlayer = mp;

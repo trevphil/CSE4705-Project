@@ -3,9 +3,9 @@ import java.io.*;
 
 public class GameEngine {
 
-	GameState game;
-	String myPlayer;
-	Move myMove;
+	public GameState game;
+	public String myPlayer;
+	private Move myMove;
 	
 	private static final String WEIGHTS_FILE = "./src/weights.txt";
 	public static final String PIECES_TAKEN = "PIECES_TAKEN";
@@ -15,7 +15,7 @@ public class GameEngine {
 	public static final String OPPONENT_KINGS = "OPPONENT_KINGS";
 	
 	public static final String[] factors = 			{ PIECES_TAKEN, MY_CENTER_PIECES, MY_KINGS, OPPONENT_PIECES, OPPONENT_KINGS	};
-	private static final double[] initialValues = 	{ 3.0,			2.0,				1.0,	0.5,				0.5 		};
+	private static final double[] initialValues = 	{ 5.0,			2.0,				1.0,	4.0,				0.5 		};
 	
 	private static HashMap<String, Weight> weights = new HashMap<String, Weight>();
 	private static HashMap<String, Weight> mutatedWeights = new HashMap<String, Weight>();
@@ -51,7 +51,7 @@ public class GameEngine {
 		List<Move> moves = game.actions();
 		if (moves.size() == 0) return null;
 		
-		MinimaxSearch minimaxSearch = new MinimaxSearch(myPlayer, this);
+		MinimaxSearch minimaxSearch = new MinimaxSearch(myPlayer);
 		Move bestMove = minimaxSearch.minimaxDecision(game);
 		if (bestMove == null) return null;
 		

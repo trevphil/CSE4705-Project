@@ -59,7 +59,7 @@ public class RmCheckersClient {
     public void setColor(String color) { _myColor = color; }
     public String getColor() { return _myColor; }
 
-    private static final int NUM_GAMES_TO_PLAY = 20;
+    private static final int NUM_GAMES_TO_PLAY = 1;
     private static boolean myPlayerWonLastGame;
     
     public static void main(String[] args) {
@@ -98,31 +98,35 @@ public class RmCheckersClient {
 		    boolean gameOver = false;
 		    if (myClient.getColor().equals("White")) {
 		    	while (!gameOver) {
-			    	String opponentMove = myClient.readAndEcho(); // equals a black move
+			    	String opponentMove = myClient.read(); // equals a black move
 			    	gameOver = isGameOver(opponentMove); // test for Game Over
 			    	if (gameOver) break;
 			    	engine.updateGameAfterOpponentMove(opponentMove);
-			    	readMessage = myClient.readAndEcho(); // move query
+			    	engine.game.printState();
+			    	readMessage = myClient.read(); // move query
 			    	gameOver = isGameOver(readMessage); // test for Game Over
 			    	if (gameOver) break;
 			    	String myMove = engine.getMove();
-			    	myClient.writeMessageAndEcho(myMove);
+			    	myClient.writeMessage(myMove);
 			    	engine.updateGameAfterMyMove();
-			    	readMessage = myClient.readAndEcho(); // equals (my) white move
+			    	engine.game.printState();
+			    	readMessage = myClient.read(); // equals (my) white move
 		    	}
 		    } else {
 		    	while (!gameOver) {
-		    		readMessage = myClient.readAndEcho(); // move query
+		    		readMessage = myClient.read(); // move query
 		    		gameOver = isGameOver(readMessage); // test for Game Over
 			    	if (gameOver) break;
 			    	String myMove = engine.getMove();
-			    	myClient.writeMessageAndEcho(myMove);
+			    	myClient.writeMessage(myMove);
 			    	engine.updateGameAfterMyMove();
-			    	readMessage = myClient.readAndEcho(); // equals (my) black move
-			    	String opponentMove = myClient.readAndEcho(); // equals a white move
+			    	engine.game.printState();
+			    	readMessage = myClient.read(); // equals (my) black move
+			    	String opponentMove = myClient.read(); // equals a white move
 			    	gameOver = isGameOver(opponentMove); // test for Game Over
 			    	if (gameOver) break;
 			    	engine.updateGameAfterOpponentMove(opponentMove);
+			    	engine.game.printState();
 		    	}
 		    }
 		   
@@ -131,6 +135,11 @@ public class RmCheckersClient {
 		    System.out.println("Failed in read/close");
 		    System.exit(1);
 		}
+    }
+    
+    public String read() throws IOException {
+    	String readMessage = _in.readLine();
+    	return readMessage;
     }
 
     public String readAndEcho() throws IOException {
