@@ -134,8 +134,8 @@ public class GameEngine {
 				Weight oldWeight = weights.get(factor);
 				Weight newWeight = mutatedWeights.get(factor);
 				if (oldWeight != null && newWeight != null) {
-					double averagedValue = (oldWeight.value * oldWeight.sampleSize + newWeight.value) / newWeight.sampleSize;
 					int n = newWeight.sampleSize; // = oldWeight.sampleSize + 1
+					double averagedValue = (oldWeight.value * oldWeight.sampleSize + newWeight.value) / n;
 					double averagedProb = (oldWeight.probabilityPositive * oldWeight.sampleSize + newWeight.probabilityPositive) / n;
 					writer.println(factor + " " + averagedValue + " " + n + " " + averagedProb);
 				}

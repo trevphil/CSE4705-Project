@@ -32,9 +32,9 @@ import java.net.*;
 
 public class RmCheckersClient {
 
-    private final static String _user = "21";  // alternate ID = 22
-    private final static String _password = "726887";  // alternate password = 791643
-    private final static String _opponent = "0";
+    private final static String _user = "22";  // alternate ID = 22
+    private final static String _password = "791643";  // alternate password = 791643 original password: 726887
+    private final static String _opponent = "21";
     private final String _machine  = "icarus.engr.uconn.edu"; 
     private int _port = 3499;
     private Socket _socket = null;
@@ -65,8 +65,10 @@ public class RmCheckersClient {
     public static void main(String[] args) {
     	int wonGames = 0;
     	for (int i = 0; i < NUM_GAMES_TO_PLAY; i++) {
+    		System.out.println("Starting game # " + (i+1));
     		playGame();
     		if (myPlayerWonLastGame) wonGames++;
+    		System.out.println("Finished game # " + (i+1) + " (" + (myPlayerWonLastGame ? "win" : "loss") + ")");
     	}
     	System.out.printf("won %d/%d games (%.02f%%)\n", wonGames, NUM_GAMES_TO_PLAY, (double)wonGames/NUM_GAMES_TO_PLAY);
     }
