@@ -36,7 +36,7 @@ public class MinimaxSearch {
 	
 	private double maxValue(GameState state, int currentDepth, double alpha, double beta) {
 		if (state.isTerminal() || currentDepth == FIXED_DEPTH) return state.utility(myPlayer);
-		for (Move move : state.actions()) {
+		for (Move move : state.getBestMoves(3, myPlayer)) {
 			GameState successor = state.result(move);
 			double score = minValue(successor, currentDepth + 1, alpha, beta);
 			if (score > alpha) alpha = score;

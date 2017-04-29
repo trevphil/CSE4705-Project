@@ -1,5 +1,7 @@
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -24,6 +26,27 @@ public class GameState {
 		// given size 36 so we can refer to indices as they are shown in diagrams (rather than starting at 0)
 		locations = new char[36];
 		player = "???";
+	}
+	
+	public List<Move> getBestMoves(int numMoves, String myPlayer) {
+		List<Move> moves = actions();
+		List<Move> bestMoves = new ArrayList<Move>();
+		GameState me = this;
+		Collections.sort(moves, new Comparator<Move>() {
+		    @Override
+		    public int compare(Move m1, Move m2) {
+		    	double eval1 = Move.evaluate(me, m1, myPlayer);
+		    	double eval2 = Move.evaluate(me, m2, myPlayer);
+		    	if (eval1 > eval2) return 1;
+		    	else if (eval2 > eval1) return -1;
+		        return 0;
+		    }
+		});
+		for (int i = moves.size() - 1; i >= 0; i--) {
+			bestMoves.add(moves.get(i));
+			if (bestMoves.size() == numMoves) break;
+		}
+		return bestMoves;
 	}
 	
 	public double evaluate(String myPlayer) {

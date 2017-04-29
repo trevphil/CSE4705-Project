@@ -32,9 +32,9 @@ import java.net.*;
 
 public class RmCheckersClient {
 
-    private final static String _user = "22";  // original ID = 21, alternate ID = 22
-    private final static String _password = "791643";  // original password = 726887, alternate password = 791643
-    private final static String _opponent = "21";
+    private final static String _user = "21";  // original ID = 21, alternate ID = 22
+    private final static String _password = "726887";  // original password = 726887, alternate password = 791643
+    private final static String _opponent = "0";
     private final String _machine  = "icarus.engr.uconn.edu"; 
     private int _port = 3499;
     private Socket _socket = null;

@@ -51,23 +51,7 @@ public class GameEngine {
 		List<Move> moves = game.actions();
 		if (moves.size() == 0) return null;
 		
-		/*
-		Collections.sort(moves, new Comparator<Move>() {
-		    @Override
-		    public int compare(Move m1, Move m2) {
-		    	double eval1 = Move.evaluate(game, m1, myPlayer);
-		    	double eval2 = Move.evaluate(game, m2, myPlayer);
-		    	if (eval1 > eval2) return 1;
-		    	else if (eval2 > eval1) return -1;
-		        return 0;
-		    }
-		});
-		// moves are now ranked from least beneficial to most beneficial
-		myMove = moves.get(moves.size() - 1);
-		return myMove.serverString();
-		*/
-		
-		MinimaxSearch minimaxSearch = new MinimaxSearch(myPlayer);
+		MinimaxSearch minimaxSearch = new MinimaxSearch(myPlayer, this);
 		Move bestMove = minimaxSearch.minimaxDecision(game);
 		if (bestMove == null) return null;
 		
