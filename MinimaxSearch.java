@@ -8,8 +8,12 @@ public class MinimaxSearch {
 	public MinimaxSearch(String mp) {
 		myPlayer = mp;
 	}
+	
+	public Move minimaxDecision(GameState state) {
+		return minimaxDecision(state, Integer.MIN_VALUE, Integer.MAX_VALUE);
+	}
 
-	public Move minimaxDecision(GameState state, double alpha, double beta) {
+	private Move minimaxDecision(GameState state, double alpha, double beta) {
 		List<Move> actions = state.actions();
 		if (actions.size() == 0) return null;
 		
@@ -30,20 +34,8 @@ public class MinimaxSearch {
 		return bestMove;
 	}
 	
-	private double maxValue(GameState state, int currentDepth) {
-		if (state.isTerminal() || currentDepth == FIXED_DEPTH) return state.utility(myPlayer);
-		double bestScore = Integer.MIN_VALUE;
-		for (Move move : state.actions()) {
-			GameState successor = state.result(move);
-			double score = minValue(successor, currentDepth + 1);
-			if (score >= bestScore) bestScore = score;
-		}
-		return bestScore;
-	}
-	
 	private double maxValue(GameState state, int currentDepth, double alpha, double beta) {
 		if (state.isTerminal() || currentDepth == FIXED_DEPTH) return state.utility(myPlayer);
-		//double bestScore = Integer.MIN_VALUE;
 		for (Move move : state.actions()) {
 			GameState successor = state.result(move);
 			double score = minValue(successor, currentDepth + 1, alpha, beta);
@@ -55,7 +47,6 @@ public class MinimaxSearch {
 	
 	private double minValue(GameState state, int currentDepth, double alpha, double beta) {
 		if (state.isTerminal() || currentDepth == FIXED_DEPTH) return state.utility(myPlayer);
-		//double bestScore = Integer.MAX_VALUE;
 		for (Move move : state.actions()) {
 			GameState successor = state.result(move);
 			double score = maxValue(successor, currentDepth + 1, alpha, beta);
@@ -63,17 +54,6 @@ public class MinimaxSearch {
 			if (alpha >= beta) break;
 		}
 		return beta;
-	}
-	
-	private double minValue(GameState state, int currentDepth) {
-		if (state.isTerminal() || currentDepth == FIXED_DEPTH) return state.utility(myPlayer);
-		double bestScore = Integer.MAX_VALUE;
-		for (Move move : state.actions()) {
-			GameState successor = state.result(move);
-			double score = maxValue(successor, currentDepth + 1);
-			if (score <= bestScore) bestScore = score;
-		}
-		return bestScore;
 	}
 	
 }
