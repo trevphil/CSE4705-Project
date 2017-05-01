@@ -13,9 +13,12 @@ public class GameEngine {
 	public static final String MY_KINGS = "MY_KINGS";
 	public static final String OPPONENT_PIECES = "OPPONENT_PIECES";
 	public static final String OPPONENT_KINGS = "OPPONENT_KINGS";
+	public static final String SAFE_PAWNS = "OPPONENT_KINGS";
+	public static final String SAFE_KINGS = "OPPONENT_KINGS";
+	public static final String DEFENDER_PIECES = "OPPONENT_KINGS";
 	
-	public static final String[] factors = 			{ PIECES_TAKEN, MY_CENTER_PIECES, MY_KINGS, OPPONENT_PIECES, OPPONENT_KINGS	};
-	private static final double[] initialValues = 	{ 5.0,			2.0,				1.0,	4.0,				0.5 		};
+	public static final String[] factors = 			{ PIECES_TAKEN, MY_CENTER_PIECES, MY_KINGS, OPPONENT_PIECES, OPPONENT_KINGS, SAFE_PAWNS, SAFE_KINGS, DEFENDER_PIECES	};
+	private static final double[] initialValues = 	{ 2.0,			2.0,				1.0,	4.0,				0.5,		  1.0, 		  0.5,			1.0				};
 	
 	private static HashMap<String, Weight> weights = new HashMap<String, Weight>();
 	private static HashMap<String, Weight> mutatedWeights = new HashMap<String, Weight>();

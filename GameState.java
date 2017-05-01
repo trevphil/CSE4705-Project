@@ -54,6 +54,9 @@ public class GameState {
 		double opponentPieces = 0;
 		double myKings = 0;
 		double opponentKings = 0;
+		double safePawns = 0;
+		double safeKings = 0;
+		double defenderPieces = 0;
 		for (int i = 1; i <= 35; i++) {
 			if (GameState.invalidLocations.contains(i)) continue;
 			char c = chipAtLocation(i);
@@ -61,29 +64,51 @@ public class GameState {
 				if (c == 'w' || c == 'W') {
 					opponentPieces++;
 					if (c == 'W') opponentKings++;
-				} else if (c == 'B') myKings++;
+				} else if (c == 'B'){
+						myKings++;
+						if(i <= 8 && (c == 'b' || c == 'B')) defenderPieces++;
+					}
 			} else if (myPlayer.equals(GameState.PLAYER2)) { // my player is White
 				if (c == 'b' || c == 'B') {
 					opponentPieces++;
 					if (c == 'B') opponentKings++;
-				} else if (c == 'W') myKings++;
+				} else if (c == 'W'){
+						myKings++;
+						if(i <= 8 && (c == 'w' || c == 'W')) defenderPieces++;
+					}
 			}
 		}
 		int[] centerPieces = new int[] { 11, 12, 15, 16, 20, 21, 24, 25 };
+		int[] edgePieces = new int[] { 4, 5, 13, 14, 22, 23, 31, 32 };
 		for (int i : centerPieces) {
 			char c = chipAtLocation(i);
 			if (myPlayer.equals(GameState.PLAYER1) && (c == 'w' || c == 'W')) myCenterPieces++;
 			else if (myPlayer.equals(GameState.PLAYER2) && (c == 'b' || c == 'B')) myCenterPieces++;
+		}
+		for(int i : edgePieces)
+		{
+			char c = chipAtLocation(i);
+			if (myPlayer.equals(GameState.PLAYER1) && (c == 'w')) safePawns++;
+			if (myPlayer.equals(GameState.PLAYER1) && (c == 'W')) safeKings++;
+			if (myPlayer.equals(GameState.PLAYER2) && (c == 'b')) safePawns++;
+			if (myPlayer.equals(GameState.PLAYER2) && (c == 'B')) safeKings++;
+			
 		}
 		// normalize
 		myCenterPieces /= 8.0;
 		myKings /= 12.0;
 		opponentPieces = (12 - opponentPieces) / 12.0;
 		opponentKings = (12 - opponentKings) / 12.0;
+		safePawns /= 12;
+		safeKings /= 12;
+		defenderPieces /= 8;
 		return  myCenterPieces	* GameEngine.valueForFactor(GameEngine.MY_CENTER_PIECES) +
 				myKings 		* GameEngine.valueForFactor(GameEngine.MY_KINGS) +
 				opponentPieces	* GameEngine.valueForFactor(GameEngine.OPPONENT_PIECES) +
-				opponentKings	* GameEngine.valueForFactor(GameEngine.OPPONENT_KINGS);
+				opponentKings	* GameEngine.valueForFactor(GameEngine.OPPONENT_KINGS) +
+				safePawns		* GameEngine.valueForFactor(GameEngine.SAFE_PAWNS) +
+				safeKings		* GameEngine.valueForFactor(GameEngine.SAFE_KINGS) +
+				defenderPieces	* GameEngine.valueForFactor(GameEngine.DEFENDER_PIECES);
 	}
 	
 	@Override

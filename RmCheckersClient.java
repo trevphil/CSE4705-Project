@@ -59,7 +59,7 @@ public class RmCheckersClient {
     public void setColor(String color) { _myColor = color; }
     public String getColor() { return _myColor; }
 
-    private static final int NUM_GAMES_TO_PLAY = 1;
+    private static final int NUM_GAMES_TO_PLAY = 20;
     private static boolean myPlayerWonLastGame;
     
     public static void main(String[] args) {
