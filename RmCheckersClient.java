@@ -59,7 +59,7 @@ public class RmCheckersClient {
     public void setColor(String color) { _myColor = color; }
     public String getColor() { return _myColor; }
 
-    private static final int NUM_GAMES_TO_PLAY = 20;
+    private static final int NUM_GAMES_TO_PLAY = 100;
     private static boolean myPlayerWonLastGame;
     
     public static void main(String[] args) {
@@ -70,7 +70,7 @@ public class RmCheckersClient {
     		if (myPlayerWonLastGame) wonGames++;
     		System.out.println("Finished game # " + (i+1) + " (" + (myPlayerWonLastGame ? "win" : "loss") + ")");
     	}
-    	System.out.printf("won %d/%d games (%.02f%%)\n", wonGames, NUM_GAMES_TO_PLAY, (double)wonGames/NUM_GAMES_TO_PLAY);
+    	System.out.printf("won %d/%d games (%.02f%%)\n", wonGames, NUM_GAMES_TO_PLAY, wonGames*100.0/NUM_GAMES_TO_PLAY);
     }
     
     private static void playGame() {

@@ -64,18 +64,18 @@ public class GameState {
 				if (c == 'w' || c == 'W') {
 					opponentPieces++;
 					if (c == 'W') opponentKings++;
-				} else if (c == 'B'){
-						myKings++;
-						if(i <= 8 && (c == 'b' || c == 'B')) defenderPieces++;
-					}
+				} else {
+					if (c == 'B') myKings++;
+					if (i <= 8 && (c == 'b' || c == 'B')) defenderPieces++;
+				}
 			} else if (myPlayer.equals(GameState.PLAYER2)) { // my player is White
 				if (c == 'b' || c == 'B') {
 					opponentPieces++;
 					if (c == 'B') opponentKings++;
-				} else if (c == 'W'){
-						myKings++;
-						if(i <= 8 && (c == 'w' || c == 'W')) defenderPieces++;
-					}
+				} else {
+					if (c == 'W') myKings++;
+					if (i >= 28 && (c == 'w' || c == 'W')) defenderPieces++;
+				}
 			}
 		}
 		int[] centerPieces = new int[] { 11, 12, 15, 16, 20, 21, 24, 25 };
@@ -85,23 +85,21 @@ public class GameState {
 			if (myPlayer.equals(GameState.PLAYER1) && (c == 'w' || c == 'W')) myCenterPieces++;
 			else if (myPlayer.equals(GameState.PLAYER2) && (c == 'b' || c == 'B')) myCenterPieces++;
 		}
-		for(int i : edgePieces)
-		{
+		for (int i : edgePieces) {
 			char c = chipAtLocation(i);
 			if (myPlayer.equals(GameState.PLAYER1) && (c == 'w')) safePawns++;
 			if (myPlayer.equals(GameState.PLAYER1) && (c == 'W')) safeKings++;
 			if (myPlayer.equals(GameState.PLAYER2) && (c == 'b')) safePawns++;
 			if (myPlayer.equals(GameState.PLAYER2) && (c == 'B')) safeKings++;
-			
 		}
 		// normalize
 		myCenterPieces /= 8.0;
 		myKings /= 12.0;
 		opponentPieces = (12 - opponentPieces) / 12.0;
 		opponentKings = (12 - opponentKings) / 12.0;
-		safePawns /= 12;
-		safeKings /= 12;
-		defenderPieces /= 8;
+		safePawns /= 8.0;
+		safeKings /= 8.0;
+		defenderPieces /= 8.0;
 		return  myCenterPieces	* GameEngine.valueForFactor(GameEngine.MY_CENTER_PIECES) +
 				myKings 		* GameEngine.valueForFactor(GameEngine.MY_KINGS) +
 				opponentPieces	* GameEngine.valueForFactor(GameEngine.OPPONENT_PIECES) +
