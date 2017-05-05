@@ -32,9 +32,9 @@ import java.net.*;
 
 public class RmCheckersClient {
 
-    private final static String _user = "21";  // original ID = 21, alternate ID = 22
-    private final static String _password = "726887";  // original password = 726887, alternate password = 791643
-    private final static String _opponent = "0";
+    private final static String _user = "22";  // original ID = 21, alternate ID = 22
+    private final static String _password = "791643";  // original password = 726887, alternate password = 791643
+    private final static String _opponent = "15";
     private final String _machine  = "icarus.engr.uconn.edu"; 
     private int _port = 3499;
     private Socket _socket = null;
@@ -59,7 +59,7 @@ public class RmCheckersClient {
     public void setColor(String color) { _myColor = color; }
     public String getColor() { return _myColor; }
 
-    private static final int NUM_GAMES_TO_PLAY = 100;
+    private static final int NUM_GAMES_TO_PLAY = 1;
     private static boolean myPlayerWonLastGame;
     
     public static void main(String[] args) {
@@ -103,7 +103,7 @@ public class RmCheckersClient {
 			    	if (gameOver) break;
 			    	engine.updateGameAfterOpponentMove(opponentMove);
 			    	engine.game.printState();
-			    	readMessage = myClient.read(); // move query
+			    	readMessage = myClient.readAndEcho(); // move query
 			    	gameOver = isGameOver(readMessage); // test for Game Over
 			    	if (gameOver) break;
 			    	String myMove = engine.getMove();
@@ -114,7 +114,7 @@ public class RmCheckersClient {
 		    	}
 		    } else {
 		    	while (!gameOver) {
-		    		readMessage = myClient.read(); // move query
+		    		readMessage = myClient.readAndEcho(); // move query
 		    		gameOver = isGameOver(readMessage); // test for Game Over
 			    	if (gameOver) break;
 			    	String myMove = engine.getMove();
@@ -180,6 +180,7 @@ public class RmCheckersClient {
     	int indexOfT = s.indexOf('t');
     	String winningPlayer = s.substring(indexOfT + 2, s.length());
     	if (gameOver) {
+    		System.out.println(s);
     		if (myClient.getColor().equals(winningPlayer)) {
     			engine.saveMutatedWeights();
     			myPlayerWonLastGame = true;
